@@ -1,8 +1,8 @@
-#CHECK
-##A Customizable Checklist App
+# CHECK
+## A Customizable Checklist App
 Currently Developed For: Command Line Interface
 
-##Set-Up
+## Set-Up
 In order for the application to work you must have a 'db.py' file located in the Checklist directory. This file should connect you to a database. Currently, the application is set up for 5 tables/collections (`users`, `checklists`, `checklistItems`, `items`, `categories`). Your database should be set up to handle these 5 tables/collections.
 
 You must have a variable for each of the tables/collections above (use the same name as indicated above). Finally you must have 5 functions:
@@ -31,7 +31,7 @@ You must have a variable for each of the tables/collections above (use the same 
     `userID` : 6-digit login id for a user
     returns  : class object id for the user
 
-####Example (MongoDB - pymongo):
+#### Example (MongoDB - pymongo):
 ```
 import pymongo as pm
 
@@ -64,7 +64,7 @@ def findUser(userID):
     return users.find_one({'login':userID})['id']
 ```
 
-##To Start
+## To Start
 Install the necessary packages
 `pip install -r requirements.txt`
 
