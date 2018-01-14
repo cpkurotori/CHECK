@@ -26,9 +26,11 @@ class PinError(Exception):
 
 class Category:
     def __init__(self, name, attributes, 
-                id = str(id_gen()), testing = False, **kwargs):
+                id = None, testing = False, **kwargs):
         self.name = name
         self.attributes = attributes
+        if id is None:
+            id = str(id_gen())
         self.id = id
         if testing:
             self.testing = testing
@@ -53,6 +55,8 @@ class Item:
                 testing = False, **kwargs):
         self.name = name
         self.categoryId = categoryId
+        if id is None:
+            id = str(id_gen())
         self.id = id
         if testing:
             self.testing = testing
@@ -73,9 +77,11 @@ class Item:
         return repr(self)
 
 class ChecklistItem:
-    def __init__(self, itemId, id = str(id_gen()), 
-                specs = {}, testing = False, **kwargs):
+    def __init__(self, itemId, specs, id = None,
+                 testing = False, **kwargs):
         self.itemId = itemId
+        if id is None:
+            id = str(id_gen())
         self.id = id
         self.specs = specs
         if testing:
@@ -105,6 +111,10 @@ class ChecklistItem:
     def getId(self):
         return self.id
 
+    def getName(self):
+        item = getItem(self.getItemId())
+        return item.getName()
+
     def __repr__(self):
         return "[ChecklistItem]:\n  [Specs] : {}".format(self.specs)
 
@@ -112,10 +122,14 @@ class ChecklistItem:
         return repr(self)
 
 class Checklist:
-    def __init__(self, name, id = str(id_gen()), 
-                items = [], testing = False, **kwargs):
+    def __init__(self, name, id = None, 
+                items = None, testing = False, **kwargs):
         self.name = name
+        if id is None:
+            id = str(id_gen())
         self.id = id
+        if items is None:
+            items = []
         self.items = items
         if testing:
             self.testing = testing
@@ -140,15 +154,18 @@ class Checklist:
         return repr(self)
 
 class User:
-    def __init__(self, name, id = str(id_gen()), 
-                login = ''.join(map(str,[ri(0,9) for _ in range(6)])), 
-                pin = None, checklists = {}, testing = False, **kwargs):
+    def __init__(self, name, id = None, 
+        login = None, pin = None, checklists = None,
+        admin = False, testing = False, **kwargs):
         self.name = name
+        if checklists is None:
+            checklists = {}
         self.checklists = checklists
+        if id is None:
+            id = str(id_gen())
         self.id = id
-        self.login = login
-        #print(self.login)
         self.pin = pin
+        self.admin = admin
         if testing:
             self.testing = testing
 
@@ -162,12 +179,20 @@ class User:
 
     @pin_required
     def addChecklist(self, chklstId):
-        checked = {}
-        checklist = getChecklist(chklstId)
-        for itemId in checklist.getItems():
-            checked[itemId] = False
-        self.checklists[chklstId] = checked
+        self.checklists[chklstId] = []
         updateUser(self)
+
+    def check(self, chklstId, chklstItemId):
+        self.checklists[chklstId].append(chklstItemId)
+        updateUser(self)
+
+    def genLogin(self):
+        login = ''.join(map(str,[ri(0,9) for _ in range(6)]))
+        while getUser(login):
+            login = ''.join(map(str,[ri(0,9) for _ in range(6)]))
+        self.login = login
+        updateUser(self)
+        return login
 
     def genPin(self):
         pin = ''.join(map(str,[ri(0,9) for _ in range(4)])).encode()
@@ -177,6 +202,16 @@ class User:
 
     def checkPin(self, pin):
         return bcrypt.hashpw(pin.encode(), self.pin) == self.pin
+
+    def showChecklist(self, chklstId):
+        checklist = getChecklist(chklstId)
+        checked = {}
+        for itemId in checklist.getItems():
+            if itemId in self.checklists[chklstId]:
+                checked[itemId] = True
+            else:
+                checked[itemId] = False
+        return checked
 
     def getName(self):
         return self.name

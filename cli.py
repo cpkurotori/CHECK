@@ -1,27 +1,35 @@
 import click
 from utils import *
 
-# @click.command()
-# @click.option('--count', default = 1, help='Number of greetings.')
-# @click.option('--name', prompt = 'Your name', help = 'The person to greet.')
-# def hello(count, name):
-#     for x in range(count):
-#         click.echo('Hello %s!' % name)
+class Option:
+    def __init__(self, function, desc, params = {}):
+        self.function = function
+        self.desc = desc
+        self.params = params
 
-# if __name__ == '__main__':
-#     hello()
+    def __call__(self):
+        return self.function(**self.params)
+
+    def __str__(self):
+        return self.desc
 
 def createUser():
     header()
     click.echo("Create User")
     name = click.prompt("Name or Identifier", confirmation_prompt = True)
-    user = create(name, testing = SETTINGS['debug'])
+    user = createU(name, testing = SETTINGS['debug'])
     header()
-    click.echo("Your user ID: {}".format(user.getLogin()))
+    click.echo("Your user ID: {}".format(user.genLogin()))
     click.echo("Your pin: {}".format(user.genPin()))
     click.echo("Keep this safe and don't tell anyone. Shhh.")
-    click.prompt('', default='Press Enter/Return to continue')
+    pause()
     userMenu(user)
+
+def createChecklist():
+    header()
+    center("Create Checklist")
+    createCL(click.prompt("Checklist Name"), testing = SETTINGS['debug'])
+    manageMenu()
 
 def loginScreen():
     header()
@@ -32,9 +40,15 @@ def loginScreen():
     else:
         mainMenu(error = 'Failed to login. Try again.')
 
-def seeChecklists():
+def viewChecklists():
+    header()
+
+def seeChecklists(user):
     header()
     click.echo("See My Checklists")
+    pause()
+    userMenu(user)
+
 
 def exitCLI(*args, **kargs):
     click.clear()
@@ -64,15 +78,25 @@ def mainMenu(error = None, *args, **kargs):
     header()
     if error:
         click.secho(error, fg='red')
-    options = {'1' : ('Create User',createUser),
-               '2' : ('Login', loginScreen)}
+    options = {'1' : Option(createUser, 'Create User'),
+               '2' : Option(loginScreen, 'Login'),
+               '3' : Option(manageMenu, 'Checklist Management')}
     createOptions(options)
 
 def userMenu(user):
     header()
     click.echo('Welcome, {}'.format(user.getName()))
-    options = {'1' : ('Logout', mainMenu)}
-    createOptions(options, ET = userMenu, EM = None, params = {'user' : user})
+    options = {'1' : Option(mainMenu, 'Logout'),
+               '2' : Option(seeChecklists, 'My Checklists', {'user' : user})}
+    createOptions(options, ET = userMenu, params = {'user' : user})
+
+def manageMenu():
+    header()
+    options = {'1' : Option(createChecklist, 'Create new Checklist'),
+               '2' : Option(viewChecklists, 'View/Modify Checklists')}
+    createOptions(options, ET = manageMenu, EM = None)
+
+
 
 @click.command()
 @click.option('--debug', default = False, help='Debug options set such as testing documents.')
@@ -83,19 +107,22 @@ def main(debug):
 ################
 """MENU UTILS"""
 ################
-def createOptions(options, ET = mainMenu, EM = 'Invalid choice!', **params):
+def createOptions(options, ET = mainMenu, params = {'error' : 'Invalid Choice!'}):
     click.echo('What do you want to do?')
     keys = list(options.keys())
     keys.sort()
     for option in keys:
-        click.echo('{} - {}'.format(option, options[option][0]))
-    options['exit'] = ('Exit', exitCLI)
-    options['menu'] = ('Go to Main Menu', mainMenu)
+        click.echo('{} - {}'.format(option, str(options[option])))
+    options['exit'] = Option(exitCLI, 'Exit')
+    options['menu'] = Option(mainMenu, 'Main Menu')
     choice = click.prompt('Choose an option', type = str)
     if choice not in options.keys():
-        ET(params, error = EM)
+        ET(**params)
     else:
-        options[choice][1]()
+        options[choice]()
+
+def pause():
+    click.prompt('', default='Press Enter/Return to continue')
 
 SETTINGS = {}
 

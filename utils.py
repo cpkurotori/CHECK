@@ -4,11 +4,7 @@ from models import *
 """FUNTIONS"""
 ##############
 def login(userID, pin):
-    try:
-        id = findUser(userID)
-    except:
-        return None
-    user = getUser(id)
+    user = getUser(findUser(userID))
     if user:
         if user.checkPin(pin):
             return user
@@ -17,8 +13,27 @@ def login(userID, pin):
     else:
         return None
 
-def create(name, testing = False):
-    user = User(name, testing = testing)
+def createUser(name, testing = False, admin = False):
+    user = User(name, testing = testing, admin = admin)
     addUser(user)
     return user
 
+def createChecklist(name, testing = False):
+    cl = Checklist(name, testing = testing)
+    addChecklist(cl)
+    return cl
+
+def createChecklistItem(itemId, specs, testing = False):
+    cli = ChecklistItem(itemId, specs, testing = testing)
+    addChecklistItem(cli)
+    return cli
+
+def createItem(name, categoryId, testing = False):
+    item = Item(name, categoryId, testing = testing)
+    addItem(item)
+    return item
+
+def createCategory(name, attributes, testing = False):
+    category = Category(name, attributes, testing = testing)
+    addCategory(category)
+    return category
